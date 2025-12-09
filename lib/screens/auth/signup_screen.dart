@@ -111,7 +111,7 @@ class _SignupScreenState extends State<SignupScreen>
     );
   }
 
-  void _submit() {
+  void _submit()async {
     setState(() => _autoValidate = true);
     if (_formKey.currentState?.validate() != true) return;
     if (!acceptedTerms) {
@@ -121,13 +121,24 @@ class _SignupScreenState extends State<SignupScreen>
       return;
     }
     // Simulasi proses pendaftaran
+   // Simulasi proses pendaftaran (ganti dengan panggilan API nyata)
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Mendaftarkan akun...')),
+    );
+
+    await Future.delayed(const Duration(seconds: 1)); // simulasi delay
+
+    // Notifikasi sukses lalu arahkan ke halaman login
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text('Sign up berhasil'),
+        content: const Text('Sign up berhasil, silakan login'),
         backgroundColor: AppTheme.primaryGold,
       ),
     );
-    // TODO: panggil API / navigasi lanjut
+
+    // Ganti route sesuai konfigurasi Anda. Saat ini menggunakan '/login'
+    Navigator.pushReplacementNamed(context, '/login');
   }
 
   @override
