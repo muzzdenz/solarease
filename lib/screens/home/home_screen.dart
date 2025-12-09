@@ -41,6 +41,8 @@ class _HomeScreenState extends State<HomeScreen> {
     
     if (index == 1) {
       Navigator.pushNamed(context, AppRoutes.servicePlans);
+    } else if (index == 2) {
+      Navigator.pushNamed(context, AppRoutes.powerCheck);
     }
   }
 

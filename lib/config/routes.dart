@@ -5,6 +5,7 @@ import '../screens/auth/signup_screen.dart';
 import '../screens/auth/forgot_password_screen.dart';
 import '../screens/home/home_screen.dart';
 import '../screens/service/service_plans_screen.dart';
+import '../screens/power_check/power_check_screen.dart';
 
 class AppRoutes {
   static const String splash = '/';
@@ -13,6 +14,7 @@ class AppRoutes {
   static const String forgotPassword = '/forgot_password';
   static const String home = '/home';
   static const String servicePlans = '/service_plans';
+  static const String powerCheck = '/power_check';
 
   static Map<String, WidgetBuilder> get routes {
     return {
@@ -22,6 +24,7 @@ class AppRoutes {
       forgotPassword: (context) => const ForgotPasswordScreen(),
       home: (context) => const HomeScreen(),
       servicePlans: (context) => const ServicePlansScreen(),
+      powerCheck: (context) => const PowerCheckScreen(),
     };
   }
 }
