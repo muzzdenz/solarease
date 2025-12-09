@@ -5,6 +5,7 @@ class AppTheme {
   static const Color darkText = Color(0xFF2C3E50);
   static const Color lightGrey = Color(0xFFF5F5F5);
   static const Color borderGrey = Color(0xFFE0E0E0);
+  static const Color bgLight = Color(0xFFF9F9F9);
 
   static ThemeData get lightTheme {
     return ThemeData(
