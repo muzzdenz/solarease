@@ -16,10 +16,12 @@ class _SignupScreenState extends State<SignupScreen>
     with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
 
+  final usernameController = TextEditingController(); 
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
 
+  final FocusNode _usernameFocus = FocusNode(); 
   final FocusNode _emailFocus = FocusNode();
   final FocusNode _passwordFocus = FocusNode();
   final FocusNode _confirmFocus = FocusNode();
@@ -43,14 +45,22 @@ class _SignupScreenState extends State<SignupScreen>
 
   @override
   void dispose() {
+    usernameController.dispose();
     emailController.dispose();
     passwordController.dispose();
     confirmPasswordController.dispose();
+    _usernameFocus.dispose();
     _emailFocus.dispose();
     _passwordFocus.dispose();
     _confirmFocus.dispose();
     _animController.dispose();
     super.dispose();
+  }
+
+  String? _validateUsername(String? v) {
+    if (v == null || v.trim().isEmpty) return 'Username wajib diisi';
+    if (v.trim().length < 3) return 'Username minimal 3 karakter';
+    return null;
   }
 
   String? _validateEmail(String? v) {
@@ -178,6 +188,27 @@ class _SignupScreenState extends State<SignupScreen>
                               : AutovalidateMode.disabled,
                           child: Column(
                             children: [
+                               TextFormField(
+                                controller: usernameController,
+                                focusNode: _usernameFocus,
+                                decoration: InputDecoration(
+                                  labelText: 'Username',
+                                  hintText: 'Choose a username',
+                                  prefixIcon: const Icon(Icons.person_outline, color: AppTheme.primaryGold),
+                                  filled: true,
+                                  fillColor: Colors.grey.shade50,
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                ),
+                                validator: _validateUsername,
+                                textInputAction: TextInputAction.next,
+                                onFieldSubmitted: (_) {
+                                  FocusScope.of(context).requestFocus(_emailFocus);
+                                },
+                               ),
+                              const SizedBox(height: 12),
                               TextFormField(
                                 controller: emailController,
                                 focusNode: _emailFocus,
