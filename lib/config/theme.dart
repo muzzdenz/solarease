@@ -7,6 +7,12 @@ class AppTheme {
   static const Color borderGrey = Color(0xFFE0E0E0);
   static const Color bgLight = Color(0xFFF9F9F9);
 
+  // Dark theme colors
+  static const Color darkBg = Color(0xFF121212);
+  static const Color darkCard = Color(0xFF1E1E1E);
+  static const Color darkText2 = Color(0xFFE0E0E0);
+  static const Color darkDivider = Color(0xFF333333);
+
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
@@ -27,6 +33,52 @@ class AppTheme {
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: const BorderSide(color: borderGrey),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: primaryGold, width: 2),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: primaryGold,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(25),
+          ),
+          textStyle: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
+
+  static ThemeData get darkTheme {
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      primaryColor: primaryGold,
+      scaffoldBackgroundColor: darkBg,
+      canvasColor: darkCard,
+      appBarTheme: const AppBarTheme(
+        backgroundColor: darkCard,
+        elevation: 0,
+        centerTitle: true,
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: darkCard,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: darkDivider),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: darkDivider),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
