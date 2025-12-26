@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 import '../../config/theme.dart';
 import '../../models/location_model.dart';
 
@@ -14,23 +15,36 @@ class MapPickerScreen extends StatefulWidget {
 
 class _MapPickerScreenState extends State<MapPickerScreen> {
   late MapController mapController;
-  LatLng selectedLocation = const LatLng(-6.2088, 106.8456); // Jakarta default
+  LatLng selectedLocation = const LatLng(-6.2088, 106.8456); // Jakarta, Indonesia
   List<Marker> markers = [];
-  String selectedAddress = 'Select location on map';
+  String selectedAddress = 'Pilih lokasi di peta';
   bool _isLoading = true;
-  double _zoom = 15;
+  double _zoom = 13;
+  bool _mapReady = false;
 
   @override
   void initState() {
     super.initState();
     mapController = MapController();
-    _getCurrentLocation();
+    // Tunggu map render dulu sebelum move
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _getCurrentLocation();
+    });
   }
 
   Future<void> _getCurrentLocation() async {
     try {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Layanan lokasi dinonaktifkan. Silakan aktifkan di setting.',
+              ),
+            ),
+          );
+        }
         setState(() {
           _isLoading = false;
         });
@@ -40,27 +54,95 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Izin lokasi ditolak.'),
+              ),
+            );
+          }
+          setState(() {
+            _isLoading = false;
+          });
+          return;
+        }
       }
 
-      if (permission == LocationPermission.whileInUse ||
-          permission == LocationPermission.always) {
-        Position position = await Geolocator.getCurrentPosition();
+      if (permission == LocationPermission.deniedForever) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Izin lokasi ditolak selamanya. Ubah di pengaturan.'),
+            ),
+          );
+        }
         setState(() {
-          selectedLocation = LatLng(position.latitude, position.longitude);
+          _isLoading = false;
+        });
+        return;
+      }
+
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+        timeLimit: const Duration(seconds: 10),
+      );
+      
+      final newLocation = LatLng(position.latitude, position.longitude);
+      
+      // Get address from coordinates
+      String address = await _getAddressFromLatLng(newLocation);
+      
+      if (mounted) {
+        setState(() {
+          selectedLocation = newLocation;
+          selectedAddress = address;
           _zoom = 15;
           _addMarker(selectedLocation);
           _isLoading = false;
         });
-        mapController.move(selectedLocation, _zoom);
-      } else {
-        setState(() {
-          _isLoading = false;
-        });
+        try {
+          mapController.move(selectedLocation, _zoom);
+        } catch (e) {
+          debugPrint('Map move error: $e');
+        }
       }
     } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
+      debugPrint('Error getting location: $e');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          // Set default lokasi Jakarta
+          selectedLocation = const LatLng(-6.2088, 106.8456);
+          selectedAddress = 'Jakarta, Indonesia (Default)';
+          _addMarker(selectedLocation);
+        });
+        try {
+          mapController.move(selectedLocation, _zoom);
+        } catch (e) {
+          debugPrint('Map move error: $e');
+        }
+      }
+    }
+  }
+
+  Future<String> _getAddressFromLatLng(LatLng location) async {
+    try {
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+        location.latitude,
+        location.longitude,
+      );
+
+      if (placemarks.isNotEmpty) {
+        final place = placemarks[0];
+        String address =
+            '${place.street ?? ''}, ${place.subLocality ?? ''}, ${place.locality ?? ''}, ${place.postalCode ?? ''}';
+        return address.replaceAll(RegExp(r',\s*$'), ''); // Remove trailing comma
+      }
+      return 'Lat: ${location.latitude.toStringAsFixed(4)}, Lng: ${location.longitude.toStringAsFixed(4)}';
+    } catch (e) {
+      debugPrint('Error getting address: $e');
+      return 'Lat: ${location.latitude.toStringAsFixed(4)}, Lng: ${location.longitude.toStringAsFixed(4)}';
     }
   }
 
@@ -100,9 +182,13 @@ class _MapPickerScreenState extends State<MapPickerScreen> {
     });
   }
 
-  void _onMapTap(TapPosition tapPosition, LatLng point) {
+  void _onMapTap(TapPosition tapPosition, LatLng point) async {
     setState(() {
       selectedLocation = point;
+    });
+    String address = await _getAddressFromLatLng(point);
+    setState(() {
+      selectedAddress = address;
     });
     _addMarker(point);
   }
@@ -151,13 +237,21 @@ void _zoomOut() {
               mapController: mapController,
               options: MapOptions(
                 initialCenter: selectedLocation,
-                initialZoom: 15,
+                initialZoom: _zoom,
                 onTap: _onMapTap,
+                onMapReady: () {
+                  setState(() => _mapReady = true);
+                  // Auto move ke user location setelah map ready
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    mapController.move(selectedLocation, _zoom);
+                  });
+                },
               ),
               children: [
                 TileLayer(
                   urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                   userAgentPackageName: 'com.example.solarease',
+                  retinaMode: true,
                 ),
                 MarkerLayer(markers: markers),
               ],

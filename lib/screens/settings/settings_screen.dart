@@ -90,6 +90,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 const SizedBox(height: 14),
                 _SectionCard(
+                  title: 'Transaksi',
+                  children: [
+                    _SettingTile(
+                      icon: Icons.shopping_bag_outlined,
+                      title: 'Riwayat Pembelian',
+                      subtitle: 'Lihat semua pembelian Anda',
+                      onTap: () => Navigator.pushNamed(context, '/purchase_history'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                _SectionCard(
                   title: 'Sistem & Bantuan',
                   children: [
                     _SettingTile(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../config/theme.dart';
 import '../../models/service_plan.dart';
 import '../../widgets/custom_button.dart';
+import 'service_order_screen.dart';
 
 class ServicePlanDetailScreen extends StatelessWidget {
   final ServicePlan plan;
@@ -11,19 +12,22 @@ class ServicePlanDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: AppTheme.bgLight,
+      backgroundColor: isDark ? AppTheme.darkBg : AppTheme.bgLight,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
+          icon: Icon(Icons.arrow_back,
+              color: isDark ? AppTheme.darkText2 : Colors.black87),
           onPressed: () => Navigator.pop(context),
         ),
-        actions: const [
+        actions: [
           Padding(
-            padding: EdgeInsets.only(right: 12),
-            child: Icon(Icons.favorite_border, color: Colors.black87),
+            padding: const EdgeInsets.only(right: 12),
+            child: Icon(Icons.favorite_border,
+                color: isDark ? AppTheme.darkText2 : Colors.black87),
           )
         ],
       ),
@@ -35,11 +39,11 @@ class ServicePlanDetailScreen extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: isDark ? AppTheme.darkCard : Colors.white,
                 borderRadius: BorderRadius.circular(18),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.06),
+                    color: Colors.black.withOpacity(isDark ? 0.3 : 0.06),
                     blurRadius: 14,
                     offset: const Offset(0, 12),
                   )
@@ -169,12 +173,14 @@ class ServicePlanDetailScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 10),
                   CustomButton(
-                    label: 'Tambah ke Keranjang',
+                    label: 'Pesan Sekarang',
                     onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                            content:
-                                Text('${plan.name} ditambahkan ke keranjang')),
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              ServiceOrderScreen(plan: plan),
+                        ),
                       );
                     },
                   ),

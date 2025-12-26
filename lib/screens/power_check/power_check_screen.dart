@@ -3,6 +3,7 @@ import '../../config/theme.dart';
 import '../../widgets/custom_button.dart';
 import '../../models/location_model.dart';
 import 'map_picker_screen.dart';
+import 'power_check_result_screen.dart';
 
 class PowerCheckScreen extends StatefulWidget {
   const PowerCheckScreen({Key? key}) : super(key: key);
@@ -44,9 +45,16 @@ class _PowerCheckScreenState extends State<PowerCheckScreen> {
       );
       return;
     }
-    setState(() {
-      _showResult = true;
-    });
+    final area = double.tryParse(_areaController.text) ?? 0;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PowerCheckResultScreen(
+          location: pickedLocation!,
+          area: area,
+        ),
+      ),
+    );
   }
 
   @override
