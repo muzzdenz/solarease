@@ -21,15 +21,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: AppTheme.bgLight,
+      backgroundColor: isDark ? AppTheme.darkBg : AppTheme.bgLight,
       appBar: AppBar(
-        title: const Text('Pengaturan',
-            style: TextStyle(color: Colors.black, fontWeight: FontWeight.w800)),
+        title: Text('Pengaturan',
+            style: TextStyle(
+                color: isDark ? AppTheme.darkText2 : Colors.black,
+                fontWeight: FontWeight.w800)),
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
+          icon: Icon(Icons.arrow_back,
+              color: isDark ? AppTheme.darkText2 : Colors.black87),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -189,14 +193,15 @@ class _SectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? AppTheme.darkCard : Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withOpacity(isDark ? 0.3 : 0.05),
             blurRadius: 10,
             offset: const Offset(0, 8),
           )
@@ -206,8 +211,10 @@ class _SectionCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(title,
-              style:
-                  const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+              style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 15,
+                  color: isDark ? AppTheme.darkText2 : AppTheme.darkText)),
           const SizedBox(height: 10),
           ...children,
         ],
@@ -233,7 +240,10 @@ class _SettingTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = isDestructive ? Colors.red : AppTheme.darkText;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final color = isDestructive
+        ? Colors.red
+        : (isDark ? AppTheme.darkText2 : AppTheme.darkText);
     return ListTile(
       contentPadding: EdgeInsets.zero,
       leading: Container(
@@ -248,8 +258,11 @@ class _SettingTile extends StatelessWidget {
         title,
         style: TextStyle(fontWeight: FontWeight.w700, color: color),
       ),
-      subtitle: Text(subtitle, style: const TextStyle(color: Colors.black54)),
-      trailing: const Icon(Icons.chevron_right, color: Colors.black38),
+      subtitle: Text(subtitle,
+          style: TextStyle(
+              color: isDark ? AppTheme.darkText2.withOpacity(0.6) : Colors.black54)),
+      trailing: Icon(Icons.chevron_right,
+          color: isDark ? AppTheme.darkText2.withOpacity(0.5) : Colors.black38),
       onTap: onTap,
     );
   }
@@ -270,6 +283,7 @@ class _SwitchTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return SwitchListTile.adaptive(
       contentPadding: EdgeInsets.zero,
       secondary: Container(
@@ -280,7 +294,10 @@ class _SwitchTile extends StatelessWidget {
         ),
         child: Icon(icon, color: AppTheme.primaryGold),
       ),
-      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
+      title: Text(title,
+          style: TextStyle(
+              fontWeight: FontWeight.w700,
+              color: isDark ? AppTheme.darkText2 : AppTheme.darkText)),
       value: value,
       onChanged: onChanged,
       activeColor: AppTheme.primaryGold,
@@ -295,18 +312,21 @@ class _SupportCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         gradient: LinearGradient(
-          colors: [AppTheme.primaryGold.withOpacity(0.12), Colors.white],
+          colors: isDark
+              ? [AppTheme.primaryGold.withOpacity(0.2), AppTheme.darkCard]
+              : [AppTheme.primaryGold.withOpacity(0.12), Colors.white],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withOpacity(isDark ? 0.3 : 0.04),
             blurRadius: 10,
             offset: const Offset(0, 8),
           )
@@ -326,12 +346,17 @@ class _SupportCard extends StatelessWidget {
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
+              children: [
                 Text('Butuh bantuan cepat?',
-                    style: TextStyle(fontWeight: FontWeight.w800)),
-                SizedBox(height: 4),
+                    style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        color: isDark ? AppTheme.darkText2 : AppTheme.darkText)),
+                const SizedBox(height: 4),
                 Text('Hubungi tim support untuk konsultasi energi solar.',
-                    style: TextStyle(color: Colors.black54)),
+                    style: TextStyle(
+                        color: isDark
+                            ? AppTheme.darkText2.withOpacity(0.6)
+                            : Colors.black54)),
               ],
             ),
           ),

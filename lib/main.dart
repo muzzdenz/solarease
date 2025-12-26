@@ -4,10 +4,13 @@ import 'config/theme.dart';
 import 'config/routes.dart';
 import 'services/theme_service.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final themeService = ThemeService();
+  await Future.delayed(const Duration(milliseconds: 100)); // Give time to initialize
   runApp(
-    ChangeNotifierProvider(
-      create: (_) => ThemeService(),
+    ChangeNotifierProvider.value(
+      value: themeService,
       child: const MyApp(),
     ),
   );

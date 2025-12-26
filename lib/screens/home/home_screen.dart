@@ -75,22 +75,27 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: AppTheme.bgLight,
+      backgroundColor: isDark ? AppTheme.darkBg : AppTheme.bgLight,
       appBar: AppBar(
-        title: const Text('SolarEase',
-            style: TextStyle(color: Colors.black, fontWeight: FontWeight.w700)),
+        title: Text('SolarEase',
+            style: TextStyle(
+                color: isDark ? AppTheme.darkText2 : Colors.black,
+                fontWeight: FontWeight.w700)),
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: false,
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications_none, color: Colors.black87),
+            icon: Icon(Icons.notifications_none,
+                color: isDark ? AppTheme.darkText2 : Colors.black87),
             onPressed: () {},
           ),
           IconButton(
-            icon: const Icon(Icons.logout, color: Colors.black54),
+            icon: Icon(Icons.logout,
+                color: isDark ? AppTheme.darkText2.withOpacity(0.7) : Colors.black54),
             onPressed: _logout,
           )
         ],
@@ -105,10 +110,15 @@ class _HomeScreenState extends State<HomeScreen> {
               height: 240,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [
-                    AppTheme.primaryGold.withOpacity(0.85),
-                    const Color(0xFFF9E7D2)
-                  ],
+                  colors: isDark
+                      ? [
+                          AppTheme.primaryGold.withOpacity(0.3),
+                          AppTheme.darkCard.withOpacity(0.5)
+                        ]
+                      : [
+                          AppTheme.primaryGold.withOpacity(0.85),
+                          const Color(0xFFF9E7D2)
+                        ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -157,16 +167,17 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildGreetingCard(Size size) {
     final name = userPhone.isNotEmpty ? userPhone : 'Charlie';
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
       width: size.width,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? AppTheme.darkCard : Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withOpacity(isDark ? 0.3 : 0.05),
               blurRadius: 10,
               offset: const Offset(0, 8))
         ],
@@ -195,12 +206,17 @@ class _HomeScreenState extends State<HomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('Hi, $name',
-                    style: const TextStyle(
-                        fontSize: 20, fontWeight: FontWeight.w700)),
+                    style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? AppTheme.darkText2 : AppTheme.darkText)),
                 const SizedBox(height: 4),
                 Text(_formattedDate,
-                    style:
-                        const TextStyle(color: Colors.black54, fontSize: 13)),
+                    style: TextStyle(
+                        color: isDark
+                            ? AppTheme.darkText2.withOpacity(0.6)
+                            : Colors.black54,
+                        fontSize: 13)),
               ],
             ),
           ),
@@ -247,18 +263,21 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildEnergyOverview() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         gradient: LinearGradient(
-          colors: [Colors.white, Colors.white.withOpacity(0.92)],
+          colors: isDark
+              ? [AppTheme.darkCard, AppTheme.darkCard.withOpacity(0.8)]
+              : [Colors.white, Colors.white.withOpacity(0.92)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withOpacity(isDark ? 0.3 : 0.04),
               blurRadius: 10,
               offset: const Offset(0, 10))
         ],
@@ -268,27 +287,43 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: const [
+            children: [
               Text('Today',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-              Icon(Icons.more_horiz, color: Colors.black45),
+                  style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: isDark ? AppTheme.darkText2 : AppTheme.darkText)),
+              Icon(Icons.more_horiz,
+                  color: isDark
+                      ? AppTheme.darkText2.withOpacity(0.5)
+                      : Colors.black45),
             ],
           ),
           const SizedBox(height: 6),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
-            children: const [
+            children: [
               Text('30.2',
                   style: TextStyle(
-                      fontSize: 32, fontWeight: FontWeight.bold, height: 1)),
-              SizedBox(width: 6),
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                      height: 1,
+                      color: isDark ? AppTheme.darkText2 : AppTheme.darkText)),
+              const SizedBox(width: 6),
               Text('kWh',
-                  style: TextStyle(fontSize: 16, color: Colors.black54)),
+                  style: TextStyle(
+                      fontSize: 16,
+                      color: isDark
+                          ? AppTheme.darkText2.withOpacity(0.6)
+                          : Colors.black54)),
             ],
           ),
           const SizedBox(height: 6),
-          const Text('Solar power generated so far',
-              style: TextStyle(color: Colors.black54)),
+          Text('Solar power generated so far',
+              style: TextStyle(
+                  color: isDark
+                      ? AppTheme.darkText2.withOpacity(0.6)
+                      : Colors.black54)),
           const SizedBox(height: 14),
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
@@ -389,15 +424,16 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildGenerationCard() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? AppTheme.darkCard : Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withOpacity(isDark ? 0.3 : 0.04),
               blurRadius: 12,
               offset: const Offset(0, 10))
         ],
@@ -407,10 +443,15 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: const [
+            children: [
               Text('Solar generation',
-                  style: TextStyle(fontWeight: FontWeight.w700)),
-              Text('140.6 kWh', style: TextStyle(fontWeight: FontWeight.bold)),
+                  style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: isDark ? AppTheme.darkText2 : AppTheme.darkText)),
+              Text('140.6 kWh',
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? AppTheme.darkText2 : AppTheme.darkText)),
             ],
           ),
           const SizedBox(height: 8),
@@ -466,13 +507,21 @@ class _InfoChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label,
-            style: const TextStyle(color: Colors.black54, fontSize: 12)),
+            style: TextStyle(
+                color: isDark
+                    ? AppTheme.darkText2.withOpacity(0.6)
+                    : Colors.black54,
+                fontSize: 12)),
         const SizedBox(height: 4),
-        Text(value, style: const TextStyle(fontWeight: FontWeight.w700)),
+        Text(value,
+            style: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: isDark ? AppTheme.darkText2 : AppTheme.darkText)),
       ],
     );
   }
@@ -494,16 +543,17 @@ class _ActionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
       onTap: item.onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isDark ? AppTheme.darkCard : Colors.white,
           borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
-                color: Colors.black.withOpacity(0.04),
+                color: Colors.black.withOpacity(isDark ? 0.3 : 0.04),
                 blurRadius: 10,
                 offset: const Offset(0, 10))
           ],
@@ -520,7 +570,9 @@ class _ActionCard extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             Text(item.label,
-                style: const TextStyle(fontWeight: FontWeight.w600)),
+                style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? AppTheme.darkText2 : AppTheme.darkText)),
           ],
         ),
       ),
@@ -548,19 +600,25 @@ class _GradientCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(14),
         gradient: LinearGradient(
-          colors: [card.color, Colors.white],
+          colors: isDark
+              ? [card.color.withOpacity(0.2), AppTheme.darkCard]
+              : [card.color, Colors.white],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        border: Border.all(color: Colors.grey.shade200),
+        border: Border.all(
+            color: isDark
+                ? AppTheme.darkDivider
+                : Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.03),
+              color: Colors.black.withOpacity(isDark ? 0.3 : 0.03),
               blurRadius: 8,
               offset: const Offset(0, 8))
         ],
@@ -572,10 +630,10 @@ class _GradientCard extends StatelessWidget {
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.white,
+              color: isDark ? AppTheme.darkBg : Colors.white,
               boxShadow: [
                 BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withOpacity(isDark ? 0.3 : 0.05),
                     blurRadius: 6,
                     offset: const Offset(0, 4))
               ],
@@ -584,11 +642,17 @@ class _GradientCard extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text(card.title,
-              style: const TextStyle(color: Colors.black54, fontSize: 12)),
+              style: TextStyle(
+                  color: isDark
+                      ? AppTheme.darkText2.withOpacity(0.6)
+                      : Colors.black54,
+                  fontSize: 12)),
           const SizedBox(height: 6),
           Text(card.value,
-              style:
-                  const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: isDark ? AppTheme.darkText2 : AppTheme.darkText)),
         ],
       ),
     );

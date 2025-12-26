@@ -51,18 +51,24 @@ class _PowerCheckScreenState extends State<PowerCheckScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: AppTheme.primaryGold,
+      backgroundColor:
+          isDark ? AppTheme.darkBg : AppTheme.primaryGold,
       appBar: AppBar(
-        backgroundColor: AppTheme.primaryGold,
+        backgroundColor:
+            isDark ? AppTheme.darkCard : AppTheme.primaryGold,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: Icon(Icons.arrow_back,
+              color: isDark ? AppTheme.darkText2 : Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'Power Check',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          style: TextStyle(
+              color: isDark ? AppTheme.darkText2 : Colors.white,
+              fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
       ),
@@ -76,22 +82,26 @@ class _PowerCheckScreenState extends State<PowerCheckScreen> {
                   margin: const EdgeInsets.symmetric(horizontal: 20),
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: isDark ? AppTheme.darkCard : Colors.white,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
-                        children: const [
-                          Icon(Icons.location_on_outlined, color: Colors.grey),
-                          SizedBox(width: 8),
+                        children: [
+                          Icon(Icons.location_on_outlined,
+                              color: isDark
+                                  ? AppTheme.darkText2.withOpacity(0.6)
+                                  : Colors.grey),
+                          const SizedBox(width: 8),
                           Text(
                             'Select Location',
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
-                              color: AppTheme.darkText,
+                              color:
+                                  isDark ? AppTheme.darkText2 : AppTheme.darkText,
                             ),
                           ),
                         ],
@@ -137,15 +147,19 @@ class _PowerCheckScreenState extends State<PowerCheckScreen> {
                       ),
                       const SizedBox(height: 24),
                       Row(
-                        children: const [
-                          Icon(Icons.home_outlined, color: Colors.grey),
-                          SizedBox(width: 8),
+                        children: [
+                          Icon(Icons.home_outlined,
+                              color: isDark
+                                  ? AppTheme.darkText2.withOpacity(0.6)
+                                  : Colors.grey),
+                          const SizedBox(width: 8),
                           Text(
                             'Area',
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
-                              color: AppTheme.darkText,
+                              color:
+                                  isDark ? AppTheme.darkText2 : AppTheme.darkText,
                             ),
                           ),
                         ],
