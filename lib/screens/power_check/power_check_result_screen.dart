@@ -35,16 +35,16 @@ class _PowerCheckResultScreenState extends State<PowerCheckResultScreen>
   bool _isSubmitting = false;
   String? _errorMessage;
 
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 1200),
-      vsync: this,
-    );
-    _controller.forward();
-    _calculateEstimates();
-  }
+  // Payload controllers to align with request body
+  late final TextEditingController _addressController;
+  late final TextEditingController _landAreaController;
+  late final TextEditingController _latitudeController;
+  late final TextEditingController _longitudeController;
+  late final TextEditingController _solarIrradianceController;
+  late final TextEditingController _panelEfficiencyController;
+  late final TextEditingController _systemLossesController;
+
+  
 
   void _calculateEstimates() {
     estimatedCapacity = widget.area * 0.15; // kW per m²
@@ -62,17 +62,43 @@ class _PowerCheckResultScreenState extends State<PowerCheckResultScreen>
     });
 
     try {
-      // Estimate solar irradiance based on location (mock)
-      final solarIrradiance = 4.5; // kWh/m²/day average
-      
+      // Read payload from inputs (aligns with request body)
+      final address = _addressController.text.trim();
+      if (address.isEmpty) {
+        throw Exception('Alamat wajib diisi');
+      }
+
+      final landArea = double.tryParse(_landAreaController.text.trim());
+      final latitude = double.tryParse(_latitudeController.text.trim());
+      final longitude = double.tryParse(_longitudeController.text.trim());
+      final solarIrradiance = double.tryParse(_solarIrradianceController.text.trim());
+      final panelEfficiency = int.tryParse(_panelEfficiencyController.text.trim());
+      final systemLosses = int.tryParse(_systemLossesController.text.trim());
+
+      if (landArea == null) {
+        throw Exception('Luas lahan tidak valid');
+      }
+      if (latitude != null && (latitude < -90 || latitude > 90)) {
+        throw Exception('Latitude harus antara -90 s.d 90');
+      }
+      if (longitude != null && (longitude < -180 || longitude > 180)) {
+        throw Exception('Longitude harus antara -180 s.d 180');
+      }
+      if (panelEfficiency != null && (panelEfficiency < 1 || panelEfficiency > 100)) {
+        throw Exception('Efisiensi panel harus 1-100%');
+      }
+      if (systemLosses != null && (systemLosses < 0 || systemLosses > 100)) {
+        throw Exception('System losses harus 0-100%');
+      }
+
       final calculation = await _estimationService.createCalculation(
-        address: widget.location.address,
-        landArea: widget.area,
-        latitude: widget.location.latitude,
-        longitude: widget.location.longitude,
-        solarIrradiance: solarIrradiance,
-        panelEfficiency: 20,
-        systemLosses: 14,
+        address: address,
+        landArea: landArea,
+        latitude: latitude ?? widget.location.latitude,
+        longitude: longitude ?? widget.location.longitude,
+        solarIrradiance: solarIrradiance ?? 4.5,
+        panelEfficiency: panelEfficiency ?? 20,
+        systemLosses: systemLosses ?? 14,
       );
 
       if (!mounted) return;
@@ -99,6 +125,13 @@ class _PowerCheckResultScreenState extends State<PowerCheckResultScreen>
 
   @override
   void dispose() {
+    _addressController.dispose();
+    _landAreaController.dispose();
+    _latitudeController.dispose();
+    _longitudeController.dispose();
+    _solarIrradianceController.dispose();
+    _panelEfficiencyController.dispose();
+    _systemLossesController.dispose();
     _controller.dispose();
     super.dispose();
   }
@@ -182,6 +215,9 @@ class _PowerCheckResultScreenState extends State<PowerCheckResultScreen>
               const SizedBox(height: 24),
               // Details Card
               _buildDetailsCard(isDark),
+              const SizedBox(height: 16),
+              // Payload Form (align with request body)
+              _buildPayloadForm(isDark),
               const SizedBox(height: 32),
               // Error message if any
               if (_errorMessage != null)
@@ -236,6 +272,113 @@ class _PowerCheckResultScreenState extends State<PowerCheckResultScreen>
           ),
         ),
       ),
+    );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 1200),
+      vsync: this,
+    );
+    _controller.forward();
+    _calculateEstimates();
+
+    // Initialize controllers with defaults
+    _addressController = TextEditingController(text: widget.location.address);
+    _landAreaController = TextEditingController(text: widget.area.toStringAsFixed(0));
+    _latitudeController = TextEditingController(text: widget.location.latitude.toString());
+    _longitudeController = TextEditingController(text: widget.location.longitude.toString());
+    _solarIrradianceController = TextEditingController(text: '4.5');
+    _panelEfficiencyController = TextEditingController(text: '20');
+    _systemLossesController = TextEditingController(text: '14');
+  }
+
+  Widget _buildPayloadForm(bool isDark) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? AppTheme.darkCard : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Parameter Kalkulasi',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: isDark ? AppTheme.darkText2 : AppTheme.darkText,
+            ),
+          ),
+          const SizedBox(height: 12),
+          _buildTextField(label: 'Alamat', controller: _addressController, isDark: isDark),
+          const SizedBox(height: 10),
+          _buildTextField(label: 'Luas Lahan (m²)', controller: _landAreaController, keyboardType: TextInputType.number, isDark: isDark),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(child: _buildTextField(label: 'Latitude', controller: _latitudeController, keyboardType: TextInputType.number, isDark: isDark)),
+              const SizedBox(width: 12),
+              Expanded(child: _buildTextField(label: 'Longitude', controller: _longitudeController, keyboardType: TextInputType.number, isDark: isDark)),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(child: _buildTextField(label: 'Solar Irradiance (kWh/m²/day)', controller: _solarIrradianceController, keyboardType: TextInputType.number, isDark: isDark)),
+              const SizedBox(width: 12),
+              Expanded(child: _buildTextField(label: 'Efisiensi Panel (%)', controller: _panelEfficiencyController, keyboardType: TextInputType.number, isDark: isDark)),
+            ],
+          ),
+          const SizedBox(height: 10),
+          _buildTextField(label: 'System Losses (%)', controller: _systemLossesController, keyboardType: TextInputType.number, isDark: isDark),
+          const SizedBox(height: 6),
+          Text(
+            'Semua field mengikuti request body: address, land_area, latitude, longitude, solar_irradiance, panel_efficiency, system_losses.',
+            style: TextStyle(fontSize: 11, color: isDark ? AppTheme.darkText2.withOpacity(0.6) : Colors.black54),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required String label,
+    required TextEditingController controller,
+    TextInputType keyboardType = TextInputType.text,
+    required bool isDark,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: isDark ? AppTheme.darkText2.withOpacity(0.7) : Colors.black54,
+          ),
+        ),
+        const SizedBox(height: 6),
+        TextField(
+          controller: controller,
+          keyboardType: keyboardType,
+          decoration: InputDecoration(
+            isDense: true,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        ),
+      ],
     );
   }
 

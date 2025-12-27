@@ -14,15 +14,83 @@ class PowerEstimationService {
         '/powerestimation/solar-calculations',
         queryParameters: {'page': page, 'per_page': perPage},
       );
+      print('🔍 Response status: ${response.statusCode}');
+      print('🔍 Response data type: ${response.data.runtimeType}');
+      if (response.data is Map) {
+        final map = response.data as Map<String, dynamic>;
+        print('🔍 Response keys: ${map.keys.toList()}');
+        if (map['data'] != null) {
+          print('🔍 data field type: ${map['data'].runtimeType}');
+          if (map['data'] is List) {
+            print('🔍 data list length: ${(map['data'] as List).length}');
+          } else if (map['data'] is Map) {
+            final dataMap = map['data'] as Map<String, dynamic>;
+            print('🔍 data map keys: ${dataMap.keys.toList()}');
+            // Check for nested list
+            for (final key in ['data', 'items', 'calculations', 'list']) {
+              if (dataMap[key] is List) {
+                print('🔍 Found list at data.$key with ${(dataMap[key] as List).length} items');
+              }
+            }
+          }
+        }
+        if (map['meta'] != null) {
+          print('🔍 Pagination meta: ${map['meta']}');
+        }
+      }
       
       if (response.statusCode == 200 && response.data != null) {
-        final data = response.data as Map<String, dynamic>;
-        if (data['success'] == true && data['data'] is List) {
-          return (data['data'] as List<dynamic>)
-              .map((e) => SolarCalculation.fromJson(e as Map<String, dynamic>))
+        final root = response.data;
+        List<dynamic>? items;
+
+        if (root is List) {
+          items = root;
+        } else if (root is Map<String, dynamic>) {
+          final data = root['data'];
+          // Common shapes: data: [ ... ]
+          if (data is List) {
+            items = data;
+          } else if (data is Map<String, dynamic>) {
+            // Nested list under known keys - check data.data first (Laravel pagination)
+            if (data['data'] is List) {
+              items = data['data'] as List<dynamic>;
+              print('✅ Found calculations at data.data');
+            } else if (data['items'] is List) {
+              items = data['items'] as List<dynamic>;
+              print('✅ Found calculations at data.items');
+            } else if (data['calculations'] is List) {
+              items = data['calculations'] as List<dynamic>;
+              print('✅ Found calculations at data.calculations');
+            } else if (data['list'] is List) {
+              items = data['list'] as List<dynamic>;
+              print('✅ Found calculations at data.list');
+            }
+          } else {
+            // Also try top-level common keys
+            if (root['items'] is List) {
+              items = root['items'] as List<dynamic>;
+            } else if (root['calculations'] is List) {
+              items = root['calculations'] as List<dynamic>;
+            }
+          }
+
+          // If API indicates success but no list found, return empty list gracefully
+          final success = root['success'] == true || root['status'] == 'success';
+          if (items == null && success) {
+            print('⚠️ API returned success but no calculations list found');
+            return <SolarCalculation>[];
+          }
+        }
+
+        if (items != null) {
+          print('✅ Parsing ${items.length} calculation items');
+          return items
+              .whereType<Map<String, dynamic>>()
+              .map((e) => SolarCalculation.fromJson(e))
               .toList();
         }
-        throw Exception(data['message'] ?? 'Failed to load calculations');
+
+        throw Exception('Unexpected response format for calculations');
       }
       throw Exception('Failed to load calculations: ${response.statusCode}');
     } catch (e) {
@@ -56,8 +124,13 @@ class PowerEstimationService {
       
       if (response.statusCode == 201 && response.data != null) {
         final data = response.data as Map<String, dynamic>;
-        if (data['success'] == true && data['data'] != null) {
-          return SolarCalculation.fromJson(data['data'] as Map<String, dynamic>);
+        // API spec returns nested object: data.calculation
+        final payload = data['data'];
+        if (data['success'] == true && payload is Map<String, dynamic>) {
+          final calcJson = payload['calculation'];
+          if (calcJson is Map<String, dynamic>) {
+            return SolarCalculation.fromJson(calcJson);
+          }
         }
         throw Exception(data['message'] ?? 'Failed to create calculation');
       }

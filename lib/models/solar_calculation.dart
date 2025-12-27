@@ -1,3 +1,21 @@
+double _toDouble(dynamic v) {
+  if (v == null) return 0.0;
+  if (v is num) return v.toDouble();
+  return double.tryParse(v.toString()) ?? 0.0;
+}
+
+double? _toDoubleOrNull(dynamic v) {
+  if (v == null) return null;
+  if (v is num) return v.toDouble();
+  return double.tryParse(v.toString());
+}
+
+int _toInt(dynamic v) {
+  if (v == null) return 0;
+  if (v is num) return v.toInt();
+  return int.tryParse(v.toString()) ?? 0;
+}
+
 class SolarCalculation {
   final int? id;
   final String address;
@@ -35,24 +53,16 @@ class SolarCalculation {
     return SolarCalculation(
       id: json['id'] as int?,
       address: json['address'] as String,
-      latitude: (json['latitude'] as num).toDouble(),
-      longitude: (json['longitude'] as num).toDouble(),
-      landArea: (json['land_area'] as num).toDouble(),
-      solarIrradiance: (json['solar_irradiance'] as num).toDouble(),
-      panelEfficiency: json['panel_efficiency'] as int,
-      systemLosses: json['system_losses'] as int,
-      maxPowerCapacity: json['max_power_capacity'] != null
-          ? (json['max_power_capacity'] as num).toDouble()
-          : null,
-      dailyEnergyProduction: json['daily_energy_production'] != null
-          ? (json['daily_energy_production'] as num).toDouble()
-          : null,
-      monthlyEnergyProduction: json['monthly_energy_production'] != null
-          ? (json['monthly_energy_production'] as num).toDouble()
-          : null,
-      yearlyEnergyProduction: json['yearly_energy_production'] != null
-          ? (json['yearly_energy_production'] as num).toDouble()
-          : null,
+      latitude: _toDouble(json['latitude']),
+      longitude: _toDouble(json['longitude']),
+      landArea: _toDouble(json['land_area']),
+      solarIrradiance: _toDouble(json['solar_irradiance']),
+      panelEfficiency: _toInt(json['panel_efficiency']),
+      systemLosses: _toInt(json['system_losses']),
+      maxPowerCapacity: _toDoubleOrNull(json['max_power_capacity']),
+      dailyEnergyProduction: _toDoubleOrNull(json['daily_energy_production']),
+      monthlyEnergyProduction: _toDoubleOrNull(json['monthly_energy_production']),
+      yearlyEnergyProduction: _toDoubleOrNull(json['yearly_energy_production']),
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'] as String)
           : null,
@@ -139,14 +149,14 @@ class CalculationDetails {
 
   factory CalculationDetails.fromJson(Map<String, dynamic> json) {
     return CalculationDetails(
-      usableArea: (json['usable_area'] as num).toDouble(),
-      maxPowerCapacity: (json['max_power_capacity'] as num).toDouble(),
-      dailyEnergyProduction: (json['daily_energy_production'] as num).toDouble(),
-      monthlyEnergyProduction: (json['monthly_energy_production'] as num).toDouble(),
-      yearlyEnergyProduction: (json['yearly_energy_production'] as num).toDouble(),
-      panelEfficiency: json['panel_efficiency'] as int,
-      systemLosses: json['system_losses'] as int,
-      performanceRatio: (json['performance_ratio'] as num).toDouble(),
+      usableArea: _toDouble(json['usable_area']),
+      maxPowerCapacity: _toDouble(json['max_power_capacity']),
+      dailyEnergyProduction: _toDouble(json['daily_energy_production']),
+      monthlyEnergyProduction: _toDouble(json['monthly_energy_production']),
+      yearlyEnergyProduction: _toDouble(json['yearly_energy_production']),
+      panelEfficiency: _toInt(json['panel_efficiency']),
+      systemLosses: _toInt(json['system_losses']),
+      performanceRatio: _toDouble(json['performance_ratio']),
     );
   }
 }
@@ -166,10 +176,10 @@ class FinancialMetrics {
 
   factory FinancialMetrics.fromJson(Map<String, dynamic> json) {
     return FinancialMetrics(
-      installationCost: (json['installation_cost'] as num).toDouble(),
-      yearlySavings: (json['yearly_savings'] as num).toDouble(),
-      paybackPeriodYears: (json['payback_period_years'] as num).toDouble(),
-      roi25Years: (json['roi_25_years'] as num).toDouble(),
+      installationCost: _toDouble(json['installation_cost']),
+      yearlySavings: _toDouble(json['yearly_savings']),
+      paybackPeriodYears: _toDouble(json['payback_period_years']),
+      roi25Years: _toDouble(json['roi_25_years']),
     );
   }
 }

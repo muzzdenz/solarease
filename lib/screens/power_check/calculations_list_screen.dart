@@ -30,7 +30,9 @@ class _CalculationsListScreenState extends State<CalculationsListScreen> {
     });
 
     try {
-      final calculations = await _estimationService.getCalculations(page: 1, perPage: 50);
+      final calculations = await _estimationService.getCalculations(page: 1, perPage: 100);
+      debugPrint('📋 Calculations list loaded: ${calculations.length} items');
+      debugPrint('📋 Calculations list loaded: ${calculations.length} items');
       if (!mounted) return;
       setState(() {
         _calculations = calculations;
