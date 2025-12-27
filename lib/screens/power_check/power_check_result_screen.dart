@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../config/theme.dart';
 import '../../models/location_model.dart';
+import '../../services/power_estimation_service.dart';
 import '../../widgets/custom_button.dart';
 
 class PowerCheckResultScreen extends StatefulWidget {
@@ -20,13 +21,19 @@ class PowerCheckResultScreen extends StatefulWidget {
 
 class _PowerCheckResultScreenState extends State<PowerCheckResultScreen>
     with TickerProviderStateMixin {
+  final PowerEstimationService _estimationService = PowerEstimationService();
+  
   late AnimationController _controller;
 
-  // Mock calculation
+  // Calculation data
   late double estimatedCapacity;
   late double estimatedOutput;
   late double estimatedCost;
   late double savingsPerYear;
+  
+  int? _createdCalculationId;
+  bool _isSubmitting = false;
+  String? _errorMessage;
 
   @override
   void initState() {
@@ -42,8 +49,52 @@ class _PowerCheckResultScreenState extends State<PowerCheckResultScreen>
   void _calculateEstimates() {
     estimatedCapacity = widget.area * 0.15; // kW per m²
     estimatedOutput = estimatedCapacity * 4.5; // kWh per day estimate
-    estimatedCost = estimatedCapacity * 1500; // Rp per kW
-    savingsPerYear = estimatedOutput * 365 * 1500 / 1000; // Rp per year
+    estimatedCost = estimatedCapacity * 1500000; // Rp per kW (1.5M Rp/kW)
+    savingsPerYear = estimatedOutput * 365 * 1500; // Rp per year
+  }
+
+  Future<void> _submitCalculation() async {
+    if (_isSubmitting) return;
+    
+    setState(() {
+      _isSubmitting = true;
+      _errorMessage = null;
+    });
+
+    try {
+      // Estimate solar irradiance based on location (mock)
+      final solarIrradiance = 4.5; // kWh/m²/day average
+      
+      final calculation = await _estimationService.createCalculation(
+        address: widget.location.address,
+        landArea: widget.area,
+        latitude: widget.location.latitude,
+        longitude: widget.location.longitude,
+        solarIrradiance: solarIrradiance,
+        panelEfficiency: 20,
+        systemLosses: 14,
+      );
+
+      if (!mounted) return;
+      setState(() {
+        _createdCalculationId = calculation.id;
+        _isSubmitting = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Calculation saved successfully!')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _errorMessage = e.toString();
+        _isSubmitting = false;
+      });
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${e.toString()}')),
+      );
+    }
   }
 
   @override
@@ -132,7 +183,27 @@ class _PowerCheckResultScreenState extends State<PowerCheckResultScreen>
               // Details Card
               _buildDetailsCard(isDark),
               const SizedBox(height: 32),
+              // Error message if any
+              if (_errorMessage != null)
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.red.withOpacity(0.5)),
+                  ),
+                  child: Text(
+                    _errorMessage!,
+                    style: const TextStyle(color: Colors.red, fontSize: 12),
+                  ),
+                ),
               // Action Buttons
+              CustomButton(
+                label: _createdCalculationId != null ? '✓ Tersimpan' : 'Simpan Kalkulasi',
+                onPressed: _isSubmitting || _createdCalculationId != null ? null : _submitCalculation,
+              ),
+              const SizedBox(height: 12),
               CustomButton(
                 label: 'Lihat Paket Rekomendasi',
                 onPressed: () {

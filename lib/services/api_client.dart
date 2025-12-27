@@ -55,6 +55,8 @@ class ApiClient {
         },
         onError: (error, handler) {
           print('❌ Error: ${error.message}');
+          print('❌ Response: ${error.response?.data}');
+          print('❌ Status: ${error.response?.statusCode}');
           if (error.response?.statusCode == 401) {
             _clearToken();
           }
@@ -87,8 +89,25 @@ class ApiClient {
   String _getErrorMessage(DioException error) {
     if (error.response != null) {
       final data = error.response!.data;
-      if (data is Map && data['message'] != null) {
-        return data['message'].toString();
+      if (data is Map) {
+        // Try different error message keys
+        if (data['message'] != null) {
+          // Include detailed error if available (useful for 500s)
+          final msg = data['message'].toString();
+          final detail = data['error']?.toString();
+          return detail != null ? '$msg: $detail' : msg;
+        }
+        if (data['error'] != null) {
+          return data['error'].toString();
+        }
+        // Handle validation errors
+        if (data['errors'] != null && data['errors'] is Map) {
+          final errors = data['errors'] as Map;
+          final firstError = errors.values.first;
+          if (firstError is List && firstError.isNotEmpty) {
+            return firstError[0].toString();
+          }
+        }
       }
     }
     
@@ -98,6 +117,12 @@ class ApiClient {
     } else if (error.type == DioExceptionType.receiveTimeout) {
       return 'Timeout menerima data';
     } else if (error.type == DioExceptionType.badResponse) {
+      final status = error.response?.statusCode;
+      if (status == 401) {
+        return 'Email atau password salah';
+      } else if (status == 404) {
+        return 'Endpoint tidak ditemukan';
+      }
       return 'Error ${error.response?.statusCode}';
     } else {
       return error.message ?? 'Error tidak diketahui';
@@ -148,8 +173,29 @@ class ApiClient {
       });
       
       final data = response.data as Map<String, dynamic>;
-      if (data['data'] != null && data['data']['token'] != null) {
-        await saveToken(data['data']['token']);
+
+      // Try to extract token from common shapes
+      String? token;
+      // {success, data: {token: '...'}}
+      if (data['data'] is Map && (data['data'] as Map)['token'] != null) {
+        token = (data['data'] as Map)['token']?.toString();
+      }
+      // {token: '...'}
+      token ??= data['token']?.toString();
+      // {access_token: '...'}
+      token ??= data['access_token']?.toString();
+      // nested {data: {access_token: '...'}}
+      if (token == null && data['data'] is Map && (data['data'] as Map)['access_token'] != null) {
+        token = (data['data'] as Map)['access_token']?.toString();
+      }
+      // some APIs return {authorization: 'Bearer ...'}
+      final authHeader = data['authorization']?.toString();
+      if (token == null && authHeader != null && authHeader.toLowerCase().startsWith('bearer ')) {
+        token = authHeader.substring(7);
+      }
+
+      if (token != null && token.isNotEmpty) {
+        await saveToken(token);
       }
       return data;
     } on DioException catch (e) {
@@ -492,6 +538,53 @@ class ApiClient {
     try {
       final response = await _dio.post('/checkout', data: checkoutData);
       return response.data as Map<String, dynamic>;
+    } on DioException catch (e) {
+      throw Exception(_getErrorMessage(e));
+    }
+  }
+
+  // GENERIC HTTP METHODS for flexible API calls
+  Future<Response<dynamic>> get(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+  }) async {
+    try {
+      return await _dio.get(path, queryParameters: queryParameters);
+    } on DioException catch (e) {
+      throw Exception(_getErrorMessage(e));
+    }
+  }
+
+  Future<Response<dynamic>> post(
+    String path, {
+    Map<String, dynamic>? data,
+    Map<String, dynamic>? queryParameters,
+  }) async {
+    try {
+      return await _dio.post(path, data: data, queryParameters: queryParameters);
+    } on DioException catch (e) {
+      throw Exception(_getErrorMessage(e));
+    }
+  }
+
+  Future<Response<dynamic>> put(
+    String path, {
+    Map<String, dynamic>? data,
+    Map<String, dynamic>? queryParameters,
+  }) async {
+    try {
+      return await _dio.put(path, data: data, queryParameters: queryParameters);
+    } on DioException catch (e) {
+      throw Exception(_getErrorMessage(e));
+    }
+  }
+
+  Future<Response<dynamic>> delete(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+  }) async {
+    try {
+      return await _dio.delete(path, queryParameters: queryParameters);
     } on DioException catch (e) {
       throw Exception(_getErrorMessage(e));
     }

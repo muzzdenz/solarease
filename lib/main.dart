@@ -60,6 +60,7 @@ class MyApp extends StatelessWidget {
               themeService.isDarkMode ? ThemeMode.dark : ThemeMode.light,
           initialRoute: AppRoutes.splash,
           routes: AppRoutes.routes,
+          onGenerateRoute: AppRoutes.onGenerateRoute,
           debugShowCheckedModeBanner: false,
         );
       },

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../config/theme.dart';
-import '../../models/service_plan.dart';
-import '../../widgets/service_plan_card.dart';
+import '../../widgets/ui_kit.dart';
+import '../../services/api_client.dart';
 import 'service_plan_detail_screen.dart';
 
 class ServicePlansScreen extends StatefulWidget {
@@ -12,43 +12,39 @@ class ServicePlansScreen extends StatefulWidget {
 }
 
 class _ServicePlansScreenState extends State<ServicePlansScreen> {
-  List<ServicePlan> _plans = [];
+  final ApiClient _apiClient = ApiClient();
+  List<Map<String, dynamic>> _products = [];
   bool _isLoading = true;
   String? _error;
-  final filters = [
-    'Semua',
-    'Terlaris',
-    'On-Grid',
-    'Hybrid',
-    'Garansi panjang',
-    'Kustom'
-  ];
+  final filters = ['Semua', 'Efisiensi', 'Daya Tinggi', 'Harga Terjangkau'];
   String activeFilter = 'Semua';
   String query = '';
 
   @override
   void initState() {
     super.initState();
-    _loadPlans();
+    _loadProducts();
   }
 
   @override
   Widget build(BuildContext context) {
-    final filtered = _plans.where((p) {
+    final filtered = _products.where((p) {
+      final name = p['name']?.toString() ?? '';
+      final efficiency = double.tryParse(p['efficiency']?.toString() ?? '0') ?? 0.0;
+      final powerOutput = int.tryParse(p['power_output']?.toString() ?? '0') ?? 0;
+      final price = int.tryParse(p['price']?.toString() ?? '0') ?? 0;
       final matchQuery =
-          query.isEmpty || p.name.toLowerCase().contains(query.toLowerCase());
+          query.isEmpty || name.toLowerCase().contains(query.toLowerCase());
       bool matchFilter = true;
       switch (activeFilter) {
-        case 'Terlaris':
-          matchFilter = p.badge == 'Terlaris' || p.rating >= 4.7;
+        case 'Efisiensi':
+          matchFilter = efficiency >= 20.0;
           break;
-        case 'On-Grid':
-        case 'Hybrid':
-        case 'Kustom':
-          matchFilter = p.category == activeFilter || p.badge == activeFilter;
+        case 'Daya Tinggi':
+          matchFilter = powerOutput >= 150;
           break;
-        case 'Garansi panjang':
-          matchFilter = p.warranty.toLowerCase().contains('garansi');
+        case 'Harga Terjangkau':
+          matchFilter = price <= 1800000;
           break;
         default:
           matchFilter = true;
@@ -226,7 +222,7 @@ class _ServicePlansScreenState extends State<ServicePlansScreen> {
     );
   }
 
-  Widget _buildListSection(List<ServicePlan> filtered) {
+  Widget _buildListSection(List<Map<String, dynamic>> filtered) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     if (_isLoading) {
       return Container(
@@ -275,7 +271,7 @@ class _ServicePlansScreenState extends State<ServicePlansScreen> {
                         : Colors.black54)),
             const SizedBox(height: 10),
             OutlinedButton(
-              onPressed: _loadPlans,
+              onPressed: _loadProducts,
               child: const Text('Coba lagi'),
             )
           ],
@@ -310,43 +306,241 @@ class _ServicePlansScreenState extends State<ServicePlansScreen> {
           : Column(
               key: const ValueKey('list'),
               children: filtered
-                  .map(
-                    (plan) => ServicePlanCard(
-                      plan: plan,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                ServicePlanDetailScreen(plan: plan),
-                          ),
-                        );
-                      },
-                    ),
-                  )
+                  .map((product) => _buildProductCard(product, isDark))
                   .toList(),
             ),
     );
   }
 
-  Future<void> _loadPlans() async {
+  Widget _buildProductCard(Map<String, dynamic> product, bool isDark) {
+    final id = product['id']?.toString() ?? '';
+    final name = product['name']?.toString() ?? 'Solar Panel';
+    final description = product['description']?.toString() ?? '';
+    final efficiency = double.tryParse(product['efficiency']?.toString() ?? '0') ?? 0.0;
+    final powerOutput = int.tryParse(product['power_output']?.toString() ?? '0') ?? 0;
+    final priceDouble = double.tryParse(product['price']?.toString() ?? '0') ?? 0.0;
+    final price = priceDouble.round();
+    final stock = int.tryParse(product['stock']?.toString() ?? '0') ?? 0;
+    
+    // Determine badge based on efficiency or power output
+    String badge = '';
+    Color badgeColor = AppTheme.primaryGold;
+    if (efficiency >= 21.0) {
+      badge = 'High Eff';
+      badgeColor = const Color(0xFFFF6B35);
+    } else if (powerOutput >= 150) {
+      badge = 'High Power';
+      badgeColor = const Color(0xFF4ECDC4);
+    } else {
+      badge = 'Standard';
+      badgeColor = AppTheme.primaryGold;
+    }
+    
+    final priceStr = 'Rp ${price.toString().replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (match) => '.')}';
+
+    return AppCard(
+      child: InkWell(
+        onTap: () {
+          // Navigate to detail screen with product ID
+          if (id.isNotEmpty) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ServicePlanDetailScreen(productId: id),
+              ),
+            );
+          }
+        },
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Product Icon
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                color: const Color(0xFF2C5F6F),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: const Icon(
+                Icons.solar_power,
+                color: Colors.white,
+                size: 32,
+              ),
+            ),
+            const SizedBox(width: 12),
+            // Product Info
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              name,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w800,
+                                color: isDark ? AppTheme.darkText2 : AppTheme.darkText,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 4),
+                            Row(children: [
+                              InfoChip(label: '$efficiency%', icon: Icons.speed),
+                              const SizedBox(width: 8),
+                              InfoChip(label: '${powerOutput}W', icon: Icons.bolt),
+                            ]),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            formatRupiah(price),
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                              color: AppTheme.primaryGold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: badgeColor,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              badge,
+                              style: const TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    description,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDark
+                          ? AppTheme.darkText2.withOpacity(0.7)
+                          : Colors.black54,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Stock: $stock',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: stock > 0
+                              ? const Color(0xFF4CAF50)
+                              : Colors.red,
+                        ),
+                      ),
+                      Row(children: [
+                        TextButton.icon(
+                          onPressed: () {
+                            if (id.isNotEmpty) {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ServicePlanDetailScreen(productId: id),
+                                ),
+                              );
+                            }
+                          },
+                          icon: const Icon(Icons.info_outline),
+                          label: const Text('Detail'),
+                        ),
+                        const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
+                      ])
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _loadProducts() async {
     setState(() {
       _isLoading = true;
       _error = null;
     });
 
     try {
-      await Future.delayed(const Duration(milliseconds: 300));
-      final data = ServicePlan.getPlans();
+      final response = await _apiClient.getProducts(page: 1, perPage: 50);
       if (!mounted) return;
+      
+      // Debug: print response untuk lihat struktur
+      print('📦 Products Response: $response');
+      
+      List<Map<String, dynamic>> products = [];
+      
+      // Handle berbagai format response
+      dynamic listData;
+      
+      if (response is List) {
+        // Format: [...]
+        listData = response;
+      } else if (response is Map<String, dynamic>) {
+        // Coba ambil dari response['data'] dulu (format Laravel standard)
+        final data = response['data'];
+        
+        if (data is List) {
+          // Format: {data: [...]}
+          listData = data;
+        } else if (data is Map && data['data'] is List) {
+          // Format: {data: {data: [...], meta: ...}} (paginated)
+          listData = data['data'];
+        }
+      }
+      
+      if (listData is List) {
+        products = List<Map<String, dynamic>>.from(listData);
+      }
+      
+      print('✅ Parsed ${products.length} products');
+      
       setState(() {
-        _plans = data;
+        _products = products;
         _isLoading = false;
       });
-    } catch (e) {
+      
+    } catch (e, stackTrace) {
+      print('❌ Error loading products: $e');
+      print('Stack trace: $stackTrace');
       if (!mounted) return;
       setState(() {
-        _error = 'Terjadi kesalahan saat memuat data.';
+        _error = 'Terjadi kesalahan: ${e.toString()}';
         _isLoading = false;
       });
     }

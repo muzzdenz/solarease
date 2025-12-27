@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
+import '../../services/dashboard_service.dart';
 import '../../config/theme.dart';
 import '../../config/routes.dart';
+import '../../models/dashboard.dart';
+import '../../widgets/ui_kit.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -11,9 +14,15 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final DashboardService _dashboardService = DashboardService();
+  
   String _userNameOrEmail = '';
   int _selectedIndex = 0;
   bool _isLive = true;
+  
+  // Dashboard data
+  DashboardHome? _dashboardHome;
+  DashboardStatistics? _dashboardStats;
 
   String get _formattedDate {
     final now = DateTime.now();
@@ -42,6 +51,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _loadUser();
+    _loadDashboardData();
   }
 
   Future<void> _loadUser() async {
@@ -52,6 +62,25 @@ class _HomeScreenState extends State<HomeScreen> {
       _userNameOrEmail =
           (name != null && name.isNotEmpty) ? name : (email ?? '');
     });
+  }
+
+  Future<void> _loadDashboardData() async {
+    if (!mounted) return;
+
+    try {
+      final home = await _dashboardService.getDashboardHome();
+      final stats = await _dashboardService.getDashboardStatistics();
+      await _dashboardService.getRecentCalculations(limit: 5);
+
+      if (!mounted) return;
+      setState(() {
+        _dashboardHome = home;
+        _dashboardStats = stats;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      debugPrint('Dashboard load error: $e');
+    }
   }
 
   Future<void> _logout() async {
@@ -266,6 +295,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildEnergyOverview() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    // Use dashboard data if available
+    final totalProduction = _dashboardHome?.totalEnergyProduction ?? 30.2;
+    final costSavings = _dashboardHome?.totalCostSavings ?? 0.0;
+    
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -290,22 +324,25 @@ class _HomeScreenState extends State<HomeScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Today',
+              Text('Total Energy',
                   style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
                       color: isDark ? AppTheme.darkText2 : AppTheme.darkText)),
-              Icon(Icons.more_horiz,
-                  color: isDark
-                      ? AppTheme.darkText2.withOpacity(0.5)
-                      : Colors.black45),
+              GestureDetector(
+                onTap: _loadDashboardData,
+                child: Icon(Icons.refresh,
+                    color: isDark
+                        ? AppTheme.darkText2.withOpacity(0.5)
+                        : Colors.black45),
+              ),
             ],
           ),
           const SizedBox(height: 6),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text('30.2',
+              Text('${totalProduction.toStringAsFixed(1)}',
                   style: TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
@@ -321,7 +358,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
           const SizedBox(height: 6),
-          Text('Solar power generated so far',
+          Text('Solar power generated',
               style: TextStyle(
                   color: isDark
                       ? AppTheme.darkText2.withOpacity(0.6)
@@ -330,7 +367,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
             child: LinearProgressIndicator(
-              value: 0.62,
+              value: (totalProduction / 100).clamp(0.0, 1.0),
               minHeight: 10,
               backgroundColor: Colors.grey.shade200,
               valueColor:
@@ -340,10 +377,10 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: const [
-              _InfoChip(label: 'Grid import', value: '4.2 kWh'),
-              _InfoChip(label: 'Savings', value: '\$42 this month'),
-              _InfoChip(label: 'Battery', value: '78%'),
+            children: [
+              _InfoChip(label: 'Total Savings', value: formatRupiah(costSavings.toInt())),
+              _InfoChip(label: 'Calculations', value: '${_dashboardHome?.totalCalculations ?? 0}'),
+              _InfoChip(label: 'Active Orders', value: '${_dashboardHome?.activeOrders ?? 0}'),
             ],
           ),
         ],
@@ -354,60 +391,76 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildQuickActions() {
     final items = [
       _QuickAction(
-        icon: Icons.grid_view,
+        icon: Icons.shopping_bag,
         label: 'Service Plans',
         onTap: () => Navigator.pushNamed(context, AppRoutes.servicePlans),
+      ),
+      _QuickAction(
+        icon: Icons.shopping_cart,
+        label: 'Cart',
+        onTap: () => Navigator.pushNamed(context, AppRoutes.cart),
+      ),
+      _QuickAction(
+        icon: Icons.receipt_long,
+        label: 'Orders',
+        onTap: () => Navigator.pushNamed(context, AppRoutes.orders),
       ),
       _QuickAction(
         icon: Icons.bolt,
         label: 'Power Check',
         onTap: () => Navigator.pushNamed(context, AppRoutes.powerCheck),
       ),
-      _QuickAction(
-        icon: Icons.timeline,
-        label: 'Usage Trends',
-        onTap: () {},
-      ),
     ];
 
-    return Row(
-      children: items
-          .map(
-            (item) => Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6),
-                child: _ActionCard(item: item),
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: items
+            .map(
+              (item) => Padding(
+                padding: const EdgeInsets.only(right: 10),
+                child: SizedBox(
+                  width: 100,
+                  child: _ActionCard(item: item),
+                ),
               ),
-            ),
-          )
-          .toList(),
+            )
+            .toList(),
+      ),
     );
   }
 
   Widget _buildStatsGrid(Size size) {
     final cardWidth = (size.width - 52) / 2;
+    
+    // Use dashboard stats if available
+    final monthlyProduction = _dashboardStats?.monthlyEnergyProduction ?? 36.2;
+    final efficiency = _dashboardStats?.averageSystemEfficiency ?? 20;
+    final totalPanels = _dashboardStats?.totalPanelsInUse ?? 42;
+    final carbonAvoided = _dashboardStats?.carbonEmissionAvoided ?? 28.2;
+    
     final cards = [
       _StatCard(
-        title: 'Total energy',
-        value: '36.2 kWh',
+        title: 'Monthly energy',
+        value: '${monthlyProduction.toStringAsFixed(1)} kWh',
         icon: Icons.solar_power,
         color: const Color(0xFFFFF4E5),
       ),
       _StatCard(
-        title: 'Consumed',
-        value: '28.2 kWh',
+        title: 'Efficiency',
+        value: '${efficiency.toStringAsFixed(1)}%',
         icon: Icons.lightbulb_circle,
         color: const Color(0xFFE9F4FF),
       ),
       _StatCard(
-        title: 'Capacity',
-        value: '42.0 kWh',
+        title: 'Panels in use',
+        value: '$totalPanels units',
         icon: Icons.battery_charging_full,
         color: const Color(0xFFEFF7EE),
       ),
       _StatCard(
         title: 'CO2 reduction',
-        value: '28.2 kg',
+        value: '${carbonAvoided.toStringAsFixed(1)} kg',
         icon: Icons.eco,
         color: const Color(0xFFF4EEFF),
       ),
