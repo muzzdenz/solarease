@@ -16,7 +16,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStateMixin {
-  final phoneController = TextEditingController();
+  final emailController = TextEditingController();
   final passwordController = TextEditingController();
   bool loading = false;
 
@@ -34,7 +34,7 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
 
   @override
   void dispose() {
-    phoneController.dispose();
+    emailController.dispose();
     passwordController.dispose();
     _animController.dispose();
     super.dispose();
@@ -42,7 +42,10 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
 
   Future<void> _doLogin() async {
     setState(() => loading = true);
-    final ok = await AuthService.login(phoneController.text.trim(), passwordController.text);
+    final ok = await AuthService.login(
+      emailController.text.trim(),
+      passwordController.text,
+    );
     setState(() => loading = false);
     if (ok) {
       if (!mounted) return;
@@ -106,8 +109,8 @@ class _LoginScreenState extends State<LoginScreen> with SingleTickerProviderStat
                           ),
                         ),
                         CustomTextField(
-                          controller: phoneController,
-                          label: 'Username or Email',
+                          controller: emailController,
+                          label: 'Email',
                           hint: 'you@domain.com',
                           prefixIcon: Icons.person,
                           keyboardType: TextInputType.emailAddress,

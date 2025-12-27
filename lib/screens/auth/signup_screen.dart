@@ -4,6 +4,7 @@ import '../../config/theme.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/social_login_buttons.dart';
 import '../../widgets/auth_illustration.dart';
+import '../../services/auth_service.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({Key? key}) : super(key: key);
@@ -72,7 +73,7 @@ class _SignupScreenState extends State<SignupScreen>
 
   String? _validatePassword(String? v) {
     if (v == null || v.isEmpty) return 'Password wajib diisi';
-    if (v.length < 6) return 'Password minimal 6 karakter';
+    if (v.length < 8) return 'Password minimal 8 karakter';
     return null;
   }
 
@@ -111,7 +112,7 @@ class _SignupScreenState extends State<SignupScreen>
     );
   }
 
-  void _submit()async {
+  void _submit() async {
     setState(() => _autoValidate = true);
     if (_formKey.currentState?.validate() != true) return;
     if (!acceptedTerms) {
@@ -120,25 +121,31 @@ class _SignupScreenState extends State<SignupScreen>
       );
       return;
     }
-    // Simulasi proses pendaftaran
-   // Simulasi proses pendaftaran (ganti dengan panggilan API nyata)
+    // Panggil API register
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Mendaftarkan akun...')),
     );
 
-    await Future.delayed(const Duration(seconds: 1)); // simulasi delay
-
-    // Notifikasi sukses lalu arahkan ke halaman login
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Sign up berhasil, silakan login'),
-        backgroundColor: AppTheme.primaryGold,
-      ),
+    final ok = await AuthService.register(
+      name: usernameController.text.trim(),
+      email: emailController.text.trim(),
+      password: passwordController.text,
     );
 
-    // Ganti route sesuai konfigurasi Anda. Saat ini menggunakan '/login'
-    Navigator.pushReplacementNamed(context, '/login');
+    if (!mounted) return;
+    if (ok) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Sign up berhasil, silakan login'),
+          backgroundColor: AppTheme.primaryGold,
+        ),
+      );
+      Navigator.pushReplacementNamed(context, '/login');
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Sign up gagal. Coba lagi.')),
+      );
+    }
   }
 
   @override

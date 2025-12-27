@@ -11,7 +11,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  String userPhone = '';
+  String _userNameOrEmail = '';
   int _selectedIndex = 0;
   bool _isLive = true;
 
@@ -45,10 +45,12 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadUser() async {
-    final phone = await AuthService.currentPhone();
+    final name = await AuthService.currentName();
+    final email = await AuthService.currentEmail();
     if (!mounted) return;
     setState(() {
-      userPhone = phone ?? '';
+      _userNameOrEmail =
+          (name != null && name.isNotEmpty) ? name : (email ?? '');
     });
   }
 
@@ -166,7 +168,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildGreetingCard(Size size) {
-    final name = userPhone.isNotEmpty ? userPhone : 'Charlie';
+    final name = _userNameOrEmail.isNotEmpty ? _userNameOrEmail : 'Charlie';
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(

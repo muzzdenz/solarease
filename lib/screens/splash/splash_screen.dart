@@ -299,6 +299,34 @@ class _SplashScreenState extends State<SplashScreen>
                 },
               ),
             ),
+            // Test API Button (for development)
+            Positioned(
+              bottom: 20,
+              right: 20,
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.pushNamed(context, AppRoutes.apiTest);
+                },
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.5),
+                    ),
+                  ),
+                  child: Text(
+                    '⚙️ API Test',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),

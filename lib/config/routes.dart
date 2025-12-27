@@ -10,6 +10,7 @@ import '../screens/power_check/power_check_screen.dart';
 import '../screens/power_check/power_check_result_screen.dart';
 import '../screens/settings/settings_screen.dart';
 import '../screens/purchase/purchase_history_screen.dart';
+import '../screens/test/api_test_screen.dart';
 
 class AppRoutes {
   static const String splash = '/';
@@ -23,6 +24,7 @@ class AppRoutes {
   static const String powerCheckResult = '/power_check_result';
   static const String settings = '/settings';
   static const String purchaseHistory = '/purchase_history';
+  static const String apiTest = '/api_test';
 
   static Map<String, WidgetBuilder> get routes {
     return {
@@ -35,6 +37,7 @@ class AppRoutes {
       powerCheck: (context) => const PowerCheckScreen(),
       settings: (context) => const SettingsScreen(),
       purchaseHistory: (context) => const PurchaseHistoryScreen(),
+      apiTest: (context) => ApiTestScreen(),
     };
   }
 }
